@@ -4,10 +4,12 @@ import java.util.List;
 import java.util.Scanner;
 import lib.DatabaseUtil;
 
-public class Teacher {
-
-    // module class
-    static class module {
+public class Teacher extends Person {
+    private int teacherId;
+    private int moduleId;
+    
+    // Inner module class
+    static class Module {
         int m_id;
         String m_name;
         int c_id;
@@ -15,7 +17,7 @@ public class Teacher {
         boolean hasTeacher;
         String teacherName;
 
-        module(int m_id, String m_name, int c_id, String c_name, boolean hasTeacher, String teacherName) {
+        Module(int m_id, String m_name, int c_id, String c_name, boolean hasTeacher, String teacherName) {
             this.m_id = m_id;
             this.m_name = m_name;
             this.c_id = c_id;
@@ -31,14 +33,73 @@ public class Teacher {
                 m_id, m_name, c_name, status);
         }
     }
+    
+    // Constructors
+    public Teacher() {
+        super();
+    }
+    
+    public Teacher(String name, String address, String gender, int nic, int phoneNumber, int moduleId) {
+        super(name, address, gender, nic, phoneNumber);
+        this.moduleId = moduleId;
+    }
+    
+    public Teacher(int teacherId, String name, String address, String gender, int nic, int phoneNumber, int moduleId) {
+        super(name, address, gender, nic, phoneNumber);
+        this.teacherId = teacherId;
+        this.moduleId = moduleId;
+    }
+    
+    // Getters and Setters
+    public int getTeacherId() {
+        return teacherId;
+    }
+    
+    public void setTeacherId(int teacherId) {
+        this.teacherId = teacherId;
+    }
+    
+    public int getModuleId() {
+        return moduleId;
+    }
+    
+    public void setModuleId(int moduleId) {
+        this.moduleId = moduleId;
+    }
+    
+    @Override
+    public void displayInfo() {
+        System.out.println("╔════════════════════════════════════════════════════════╗");
+        System.out.println("║              TEACHER INFORMATION                       ║");
+        System.out.println("╠════════════════════════════════════════════════════════╣");
+        System.out.println("║ Teacher ID : " + String.format("%-38d", teacherId) + "║");
+        System.out.println("║ Name       : " + String.format("%-38s", name) + "║");
+        System.out.println("║ NIC        : " + String.format("%-38d", nic) + "║");
+        System.out.println("║ Phone      : " + String.format("%-38d", phoneNumber) + "║");
+        System.out.println("║ Gender     : " + String.format("%-38s", gender) + "║");
+        System.out.println("║ Address    : " + String.format("%-38s", address) + "║");
+        System.out.println("║ Module ID  : " + String.format("%-38d", moduleId) + "║");
+        System.out.println("╚════════════════════════════════════════════════════════╝");
+    }
 
     public static void new_t(Scanner scanner) {
-        String name = promptInputS(scanner, "Enter teacher name: "); 
-        String address = promptInputS(scanner, "Enter address: ");
-        String gender = promptInputS(scanner, "Enter Gender (M/F): ");
-        int nic = promptInputI(scanner, "Enter NIC number: ");
+        Teacher teacher = new Teacher();
+        
+        System.out.println("Enter teacher name: ");
+        teacher.setName(scanner.nextLine().trim());
+        
+        System.out.println("Enter address: ");
+        teacher.setAddress(scanner.nextLine().trim());
+        
+        System.out.println("Enter Gender (M/F): ");
+        teacher.setGender(scanner.nextLine().trim());
+        
+        System.out.println("Enter NIC number: ");
+        teacher.setNic(scanner.nextInt());
         scanner.nextLine(); // Clear buffer
-        int tp_no = promptInputI(scanner, "Enter phone number: ");
+        
+        System.out.println("Enter phone number: ");
+        teacher.setPhoneNumber(scanner.nextInt());
         scanner.nextLine(); // Clear buffer
 
         try {
@@ -46,7 +107,7 @@ public class Teacher {
             Connection conn = DatabaseUtil.getInstance().getConnection();
 
             // Fetch modules with teacher assignment status
-            List<module> moduleList = new ArrayList<>();
+            List<Module> moduleList = new ArrayList<>();
             
             String query = 
                 "SELECT m.m_id, m.m_name, m.c_id, c.c_name, " +
@@ -65,13 +126,13 @@ public class Teacher {
             System.out.println("║ Module ID║ Module Name                         ║ Course Name                    ║ Teacher Status       ║");
             System.out.println("╠══════════╬═════════════════════════════════════╬════════════════════════════════╬══════════════════════╣");
             
-            List<module> availableModules = new ArrayList<>();
+            List<Module> availableModules = new ArrayList<>();
             
             while (moduleRs.next()) {
                 boolean hasTeacher = moduleRs.getInt("t_id") > 0;
                 String teacherName = moduleRs.getString("t_name");
                 
-                module mod = new module(
+                Module mod = new Module(
                     moduleRs.getInt("m_id"),
                     moduleRs.getString("m_name"),
                     moduleRs.getInt("c_id"),
@@ -110,6 +171,7 @@ public class Teacher {
 
         int m_id = promptInputI(scanner, "\nEnter module ID to assign: ");
         scanner.nextLine(); // Clear buffer
+        teacher.setModuleId(m_id);
 
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
@@ -155,19 +217,19 @@ public class Teacher {
             // Insert teacher
             String sql = "INSERT INTO teacher (t_name, nic, address, tp, gen, m_id) VALUES (?, ?, ?, ?, ?, ?)";
             PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setString(1, name);
-            stmt.setInt(2, nic);
-            stmt.setString(3, address);
-            stmt.setInt(4, tp_no);
-            stmt.setString(5, gender);
-            stmt.setInt(6, m_id);
+            stmt.setString(1, teacher.getName());
+            stmt.setInt(2, teacher.getNic());
+            stmt.setString(3, teacher.getAddress());
+            stmt.setInt(4, teacher.getPhoneNumber());
+            stmt.setString(5, teacher.getGender());
+            stmt.setInt(6, teacher.getModuleId());
 
             int rows = stmt.executeUpdate();
             if (rows > 0) {
                 System.out.println("\n╔═══════════════════════════════════════════════════════════╗");
                 System.out.println("║       ✓ TEACHER REGISTERED SUCCESSFULLY                   ║");
                 System.out.println("╠═══════════════════════════════════════════════════════════╣");
-                System.out.println("║ Teacher: " + String.format("%-46s", name) + "║");
+                System.out.println("║ Teacher: " + String.format("%-46s", teacher.getName()) + "║");
                 System.out.println("║ Module : " + String.format("%-46s", moduleName) + "║");
                 System.out.println("╚═══════════════════════════════════════════════════════════╝");
             } else {
@@ -237,15 +299,5 @@ public class Teacher {
             System.out.println("\n✗ Error: " + e.getMessage());
             e.printStackTrace();
         }
-    }
-
-    private static String promptInputS(Scanner scanner, String message) {
-        System.out.print(message);
-        return scanner.nextLine().trim();
-    }
-
-    private static int promptInputI(Scanner scanner, String message) {
-        System.out.print(message);
-        return scanner.nextInt();
     }
 }
