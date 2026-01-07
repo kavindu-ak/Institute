@@ -1,5 +1,8 @@
-import java.util.Scanner;
-
+/**
+ * Person class - Abstract parent class
+ * Contains common attributes and methods for Student and Teacher
+ * Pure OOP implementation for GUI system
+ */
 public abstract class Person {
     protected String name;
     protected String address;
@@ -7,17 +10,17 @@ public abstract class Person {
     protected int nic;
     protected int phoneNumber;
     
-    // Constructor
+    // Default constructor
+    public Person() {
+    }
+    
+    // Parameterized constructor
     public Person(String name, String address, String gender, int nic, int phoneNumber) {
         this.name = name;
         this.address = address;
         this.gender = gender;
         this.nic = nic;
         this.phoneNumber = phoneNumber;
-    }
-    
-    // Default constructor
-    public Person() {
     }
     
     // Getters
@@ -62,34 +65,36 @@ public abstract class Person {
         this.phoneNumber = phoneNumber;
     }
     
-    // Common input methods
-    protected static String promptInputS(Scanner scanner, String message) {
-        System.out.print(message);
-        return scanner.nextLine().trim();
-    }
-    
-    protected static int promptInputI(Scanner scanner, String message) {
-        System.out.print(message);
-        return scanner.nextInt();
-    }
-    
-    // Abstract method to be implemented by child classes
+    // Abstract method - must be implemented by child classes
     public abstract void displayInfo();
     
-    // Common method to read basic person info
-    protected void readPersonInfo(Scanner scanner) {
-        this.name = promptInputS(scanner, "Enter name: ");
-        this.address = promptInputS(scanner, "Enter address: ");
-        this.gender = promptInputS(scanner, "Enter Gender (M/F): ");
-        this.nic = promptInputI(scanner, "Enter NIC number: ");
-        scanner.nextLine(); // Clear buffer
-        this.phoneNumber = promptInputI(scanner, "Enter phone number: ");
-        scanner.nextLine(); // Clear buffer
+    // Common validation
+    public boolean hasValidBasicInfo() {
+        return name != null && !name.trim().isEmpty()
+            && address != null && !address.trim().isEmpty()
+            && gender != null && !gender.trim().isEmpty()
+            && nic > 0
+            && phoneNumber > 0;
+    }
+    
+    // toString for debugging/logging
+    @Override
+    public String toString() {
+        return String.format("Person[Name=%s, NIC=%d, Phone=%d, Gender=%s]", 
+            name, nic, phoneNumber, gender);
+    }
+    
+    // equals and hashCode based on NIC (unique identifier)
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Person person = (Person) obj;
+        return nic == person.nic;
     }
     
     @Override
-    public String toString() {
-        return "Name: " + name + ", Address: " + address + ", Gender: " + gender + 
-               ", NIC: " + nic + ", Phone: " + phoneNumber;
+    public int hashCode() {
+        return Integer.hashCode(nic);
     }
 }
