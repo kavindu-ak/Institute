@@ -1,7 +1,7 @@
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
+import javax.swing.*;
 import lib.DatabaseUtil;
 
 public class LearningInstituteGUI extends JFrame {
@@ -9,7 +9,7 @@ public class LearningInstituteGUI extends JFrame {
     private CardLayout cardLayout;
     private JPanel mainPanel;
     private String currentUser;
-    private String currentUsername;  // Store username for password change
+    private String currentUsername;
     private String currentRole;
     private int currentUserId;
     
@@ -172,7 +172,7 @@ public class LearningInstituteGUI extends JFrame {
                 
                 if (password.equals(storedPassword)) {
                     currentUserId = rs.getInt("user_id");
-                    currentUsername = rs.getString("username");  // Store username
+                    currentUsername = rs.getString("username");
                     currentUser = rs.getString("full_name");
                     currentRole = rs.getString("role");
                     
@@ -242,15 +242,26 @@ public class LearningInstituteGUI extends JFrame {
         JPanel sidebar = createSidebar();
         splitPane.setLeftComponent(sidebar);
         
-        // Content area
+        // Content area - Show salary info for teachers automatically
         JPanel contentArea = new JPanel(new BorderLayout());
         contentArea.setBackground(Color.WHITE);
         
-        JLabel welcomeLabel = new JLabel("<html><div style='text-align: center;'>" +
-            "<h1>Welcome, " + currentUser + "!</h1>" +
-            "<p style='color: #666; font-size: 14px;'>Select an option from the menu to get started.</p>" +
-            "</div></html>", SwingConstants.CENTER);
-        contentArea.add(welcomeLabel, BorderLayout.CENTER);
+        if (currentRole.equalsIgnoreCase("teacher")) {
+            // For teachers, automatically open salary view
+            SwingUtilities.invokeLater(() -> openMySalary());
+            
+            JLabel welcomeLabel = new JLabel("<html><div style='text-align: center;'>" +
+                "<h1>Welcome, " + currentUser + "!</h1>" +
+                "<p style='color: #666; font-size: 14px;'>Your salary information is loading...</p>" +
+                "</div></html>", SwingConstants.CENTER);
+            contentArea.add(welcomeLabel, BorderLayout.CENTER);
+        } else {
+            JLabel welcomeLabel = new JLabel("<html><div style='text-align: center;'>" +
+                "<h1>Welcome, " + currentUser + "!</h1>" +
+                "<p style='color: #666; font-size: 14px;'>Select an option from the menu to get started.</p>" +
+                "</div></html>", SwingConstants.CENTER);
+            contentArea.add(welcomeLabel, BorderLayout.CENTER);
+        }
         
         splitPane.setRightComponent(contentArea);
         
