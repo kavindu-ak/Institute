@@ -136,11 +136,7 @@ public class MySalaryGUI extends JDialog {
         };
         
         salaryHistoryTable = new JTable(historyTableModel);
-        salaryHistoryTable.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        salaryHistoryTable.setRowHeight(30);
-        salaryHistoryTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
-        salaryHistoryTable.getTableHeader().setBackground(new Color(52, 73, 94));
-        salaryHistoryTable.getTableHeader().setForeground(Color.WHITE);
+        styleTable(salaryHistoryTable);
         
         JScrollPane scrollPane = new JScrollPane(salaryHistoryTable);
         panel.add(scrollPane, BorderLayout.CENTER);
@@ -159,11 +155,7 @@ public class MySalaryGUI extends JDialog {
         };
         
         studentPaymentsTable = new JTable(paymentsTableModel);
-        studentPaymentsTable.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        studentPaymentsTable.setRowHeight(30);
-        studentPaymentsTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
-        studentPaymentsTable.getTableHeader().setBackground(new Color(52, 73, 94));
-        studentPaymentsTable.getTableHeader().setForeground(Color.WHITE);
+        styleTable(studentPaymentsTable);
         
         JScrollPane scrollPane = new JScrollPane(studentPaymentsTable);
         panel.add(scrollPane, BorderLayout.CENTER);
@@ -473,5 +465,24 @@ public class MySalaryGUI extends JDialog {
             e.printStackTrace();
             textArea.setText("Error loading revenue details: " + e.getMessage());
         }
+    }
+    
+    private void styleTable(JTable table) {
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        table.setRowHeight(30);
+        table.setGridColor(new Color(220, 220, 220));
+        table.setShowGrid(true);
+        table.setIntercellSpacing(new Dimension(1, 1));
+        
+        // Enhanced header styling - more visible and flat
+        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        table.getTableHeader().setBackground(new Color(41, 128, 185));
+        table.getTableHeader().setForeground(Color.WHITE);
+        table.getTableHeader().setPreferredSize(new Dimension(0, 40));
+        table.getTableHeader().setBorder(BorderFactory.createLineBorder(new Color(31, 97, 141), 2));
+        table.getTableHeader().setReorderingAllowed(false);
+        
+        table.setSelectionBackground(new Color(52, 152, 219));
+        table.setSelectionForeground(Color.WHITE);
     }
 }

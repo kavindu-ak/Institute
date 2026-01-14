@@ -2,6 +2,7 @@ import java.awt.*;
 import java.sql.*;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import lib.DatabaseUtil;
 
 public class StudentManagementGUI extends JDialog {
@@ -53,14 +54,7 @@ public class StudentManagementGUI extends JDialog {
         };
         
         studentTable = new JTable(tableModel);
-        studentTable.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        studentTable.setRowHeight(30);
-        studentTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
-        studentTable.getTableHeader().setBackground(new Color(52, 73, 94));
-        studentTable.getTableHeader().setForeground(Color.WHITE);
-        studentTable.setSelectionBackground(new Color(52, 152, 219));
-        studentTable.setSelectionForeground(Color.WHITE);
-        studentTable.setGridColor(new Color(200, 200, 200));
+        styleTable(studentTable);
         
         JScrollPane scrollPane = new JScrollPane(studentTable);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
@@ -148,7 +142,6 @@ public class StudentManagementGUI extends JDialog {
         JTextField addressField = new JTextField(20);
         JComboBox<String> genderBox = new JComboBox<>(new String[]{"M", "F"});
         
-        // Style fields
         Font fieldFont = new Font("Segoe UI", Font.PLAIN, 14);
         nameField.setFont(fieldFont);
         nicField.setFont(fieldFont);
@@ -277,5 +270,45 @@ public class StudentManagementGUI extends JDialog {
         );
         
         JOptionPane.showMessageDialog(this, details, "Student Details", JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    private void styleTable(JTable table) {
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        table.setRowHeight(30);
+        table.setGridColor(new Color(220, 220, 220));
+        table.setShowGrid(true);
+        table.setIntercellSpacing(new Dimension(1, 1));
+        
+        // FORCE header colors with custom renderer
+        table.getTableHeader().setOpaque(true);
+        table.getTableHeader().setBackground(new Color(41, 128, 185));
+        table.getTableHeader().setForeground(Color.WHITE);
+        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        table.getTableHeader().setPreferredSize(new Dimension(0, 40));
+        table.getTableHeader().setBorder(BorderFactory.createLineBorder(new Color(31, 97, 141), 2));
+        table.getTableHeader().setReorderingAllowed(false);
+        
+        // Custom renderer to FORCE colors
+        table.getTableHeader().setDefaultRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                JLabel label = (JLabel) super.getTableCellRendererComponent(
+                    table, value, isSelected, hasFocus, row, column);
+                label.setBackground(new Color(41, 128, 185));
+                label.setForeground(Color.WHITE);
+                label.setFont(new Font("Segoe UI", Font.BOLD, 14));
+                label.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createMatteBorder(0, 0, 2, 1, new Color(31, 97, 141)),
+                    BorderFactory.createEmptyBorder(10, 5, 10, 5)
+                ));
+                label.setHorizontalAlignment(SwingConstants.CENTER);
+                label.setOpaque(true);
+                return label;
+            }
+        });
+        
+        table.setSelectionBackground(new Color(52, 152, 219));
+        table.setSelectionForeground(Color.WHITE);
     }
 }

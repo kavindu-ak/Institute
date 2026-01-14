@@ -1,8 +1,8 @@
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.*;
 import java.time.LocalDate;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import lib.DatabaseUtil;
 
 public class RegistrationManagementGUI extends JDialog {
@@ -54,13 +54,7 @@ public class RegistrationManagementGUI extends JDialog {
         };
         
         registrationTable = new JTable(tableModel);
-        registrationTable.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        registrationTable.setRowHeight(30);
-        registrationTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
-        registrationTable.getTableHeader().setBackground(new Color(52, 73, 94));
-        registrationTable.getTableHeader().setForeground(Color.WHITE);
-        registrationTable.setSelectionBackground(new Color(52, 152, 219));
-        registrationTable.setSelectionForeground(Color.WHITE);
+        styleTable(registrationTable);
         
         JScrollPane scrollPane = new JScrollPane(registrationTable);
         
@@ -385,6 +379,25 @@ public class RegistrationManagementGUI extends JDialog {
         );
         
         JOptionPane.showMessageDialog(this, details, "Registration Details", JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    private void styleTable(JTable table) {
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        table.setRowHeight(30);
+        table.setGridColor(new Color(220, 220, 220));
+        table.setShowGrid(true);
+        table.setIntercellSpacing(new Dimension(1, 1));
+        
+        // Enhanced header styling - more visible and flat
+        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        table.getTableHeader().setBackground(new Color(41, 128, 185));
+        table.getTableHeader().setForeground(Color.WHITE);
+        table.getTableHeader().setPreferredSize(new Dimension(0, 40));
+        table.getTableHeader().setBorder(BorderFactory.createLineBorder(new Color(31, 97, 141), 2));
+        table.getTableHeader().setReorderingAllowed(false);
+        
+        table.setSelectionBackground(new Color(52, 152, 219));
+        table.setSelectionForeground(Color.WHITE);
     }
     
     // Helper classes

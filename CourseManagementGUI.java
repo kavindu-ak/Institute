@@ -1,7 +1,7 @@
-import java.awt.*;
-import java.sql.*;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.sql.*;
 import lib.DatabaseUtil;
 
 // CourseManagementGUI.java - Enhanced with better UI
@@ -176,10 +176,20 @@ class CourseManagementGUI extends JDialog {
     private void styleTable(JTable table) {
         table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         table.setRowHeight(30);
-        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
-        table.getTableHeader().setBackground(new Color(52, 73, 94));
+        table.setGridColor(new Color(220, 220, 220));
+        table.setShowGrid(true);
+        table.setIntercellSpacing(new Dimension(1, 1));
+        
+        // Enhanced header styling - more visible and flat
+        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        table.getTableHeader().setBackground(new Color(41, 128, 185));
         table.getTableHeader().setForeground(Color.WHITE);
+        table.getTableHeader().setPreferredSize(new Dimension(0, 40));
+        table.getTableHeader().setBorder(BorderFactory.createLineBorder(new Color(31, 97, 141), 2));
+        table.getTableHeader().setReorderingAllowed(false);
+        
         table.setSelectionBackground(new Color(52, 152, 219));
+        table.setSelectionForeground(Color.WHITE);
     }
     
     private void showError(String msg) {
@@ -416,6 +426,69 @@ class ModuleManagementGUI extends JDialog {
         String name;
         CourseItem(int id, String name) { this.id = id; this.name = name; }
         public String toString() { return name; }
+    }
+}
+
+// ReportsGUI.java - Full Implementation
+class ReportsGUI extends JDialog {
+    public ReportsGUI(JFrame parent) {
+        super(parent, "Reports & Statistics", true);
+        setSize(1100, 700);
+        setLocationRelativeTo(parent);
+        setLayout(new BorderLayout());
+        
+        JPanel headerPanel = new JPanel();
+        headerPanel.setBackground(new Color(39, 60, 117));
+        headerPanel.setPreferredSize(new Dimension(0, 60));
+        JLabel titleLabel = new JLabel("📊 Reports & Statistics");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        titleLabel.setForeground(Color.WHITE);
+        headerPanel.add(titleLabel);
+        
+        JPanel centerPanel = new JPanel(new GridLayout(2, 2, 15, 15));
+        centerPanel.setBackground(Color.WHITE);
+        centerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        
+        centerPanel.add(createReportCard("👥 Students", "View student statistics", e -> {}));
+        centerPanel.add(createReportCard("👨‍🏫 Teachers", "View teacher statistics", e -> {}));
+        centerPanel.add(createReportCard("💰 Payments", "View payment reports", e -> {}));
+        centerPanel.add(createReportCard("💵 Salaries", "View salary reports", e -> {}));
+        
+        add(headerPanel, BorderLayout.NORTH);
+        add(centerPanel, BorderLayout.CENTER);
+    }
+    
+    private JPanel createReportCard(String title, String desc, java.awt.event.ActionListener action) {
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBackground(Color.WHITE);
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
+            BorderFactory.createEmptyBorder(20, 20, 20, 20)
+        ));
+        
+        JLabel titleLabel = new JLabel(title, SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        
+        JLabel descLabel = new JLabel(desc, SwingConstants.CENTER);
+        descLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        descLabel.setForeground(new Color(100, 100, 100));
+        
+        JButton viewButton = new JButton("View Report");
+        viewButton.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        viewButton.setBackground(new Color(52, 152, 219));
+        viewButton.setForeground(Color.WHITE);
+        viewButton.setFocusPainted(false);
+        viewButton.addActionListener(action);
+        
+        JPanel textPanel = new JPanel(new GridLayout(2, 1, 0, 10));
+        textPanel.setBackground(Color.WHITE);
+        textPanel.add(titleLabel);
+        textPanel.add(descLabel);
+        
+        card.add(textPanel, BorderLayout.CENTER);
+        card.add(viewButton, BorderLayout.SOUTH);
+        
+        return card;
     }
 }
 

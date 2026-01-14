@@ -42,8 +42,8 @@ public class PaymentManagementGUI extends JDialog {
         refreshButton.addActionListener(e -> loadPaymentSummary());
         
         buttonPanel.add(processButton);
-        buttonPanel.add(historyButton);
         buttonPanel.add(refreshButton);
+        buttonPanel.add(historyButton);
         
         // Table - Summary of unpaid modules by student
         String[] columns = {"Student ID", "Student Name", "Course", "Unpaid Modules", "Total Due (Rs.)", "Paid Modules"};
@@ -55,13 +55,7 @@ public class PaymentManagementGUI extends JDialog {
         };
         
         paymentTable = new JTable(tableModel);
-        paymentTable.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        paymentTable.setRowHeight(30);
-        paymentTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
-        paymentTable.getTableHeader().setBackground(new Color(52, 73, 94));
-        paymentTable.getTableHeader().setForeground(Color.WHITE);
-        paymentTable.setSelectionBackground(new Color(52, 152, 219));
-        paymentTable.setSelectionForeground(Color.WHITE);
+        styleTable(paymentTable);
         
         JScrollPane scrollPane = new JScrollPane(paymentTable);
         
@@ -197,11 +191,7 @@ public class PaymentManagementGUI extends JDialog {
         };
         
         JTable moduleTable = new JTable(moduleTableModel);
-        moduleTable.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        moduleTable.setRowHeight(30);
-        moduleTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
-        moduleTable.getTableHeader().setBackground(new Color(52, 73, 94));
-        moduleTable.getTableHeader().setForeground(Color.WHITE);
+        styleTable(moduleTable);
         
         JScrollPane moduleScroll = new JScrollPane(moduleTable);
         modulePanel.add(moduleScroll, BorderLayout.CENTER);
@@ -469,11 +459,7 @@ public class PaymentManagementGUI extends JDialog {
         };
         
         JTable historyTable = new JTable(historyModel);
-        historyTable.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        historyTable.setRowHeight(30);
-        historyTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
-        historyTable.getTableHeader().setBackground(new Color(52, 73, 94));
-        historyTable.getTableHeader().setForeground(Color.WHITE);
+        styleTable(historyTable);
         
         try {
             Connection conn = DatabaseUtil.getInstance().getConnection();
@@ -510,6 +496,25 @@ public class PaymentManagementGUI extends JDialog {
         
         dialog.add(new JScrollPane(historyTable));
         dialog.setVisible(true);
+    }
+    
+    private void styleTable(JTable table) {
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        table.setRowHeight(30);
+        table.setGridColor(new Color(220, 220, 220));
+        table.setShowGrid(true);
+        table.setIntercellSpacing(new Dimension(1, 1));
+        
+        // Enhanced header styling - more visible and flat
+        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        table.getTableHeader().setBackground(new Color(41, 128, 185));
+        table.getTableHeader().setForeground(Color.WHITE);
+        table.getTableHeader().setPreferredSize(new Dimension(0, 40));
+        table.getTableHeader().setBorder(BorderFactory.createLineBorder(new Color(31, 97, 141), 2));
+        table.getTableHeader().setReorderingAllowed(false);
+        
+        table.setSelectionBackground(new Color(52, 152, 219));
+        table.setSelectionForeground(Color.WHITE);
     }
     
     // Helper classes

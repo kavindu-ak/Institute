@@ -1,7 +1,8 @@
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.*;
+import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 import lib.DatabaseUtil;
 
 public class SalaryManagementGUI extends JDialog {
@@ -30,7 +31,7 @@ public class SalaryManagementGUI extends JDialog {
         // Info panel
         JPanel infoPanel = new JPanel(new GridLayout(1, 4, 10, 0));
         infoPanel.setBackground(new Color(236, 240, 241));
-        infoPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        infoPanel.setBorder(BorderFactory.createEmptyBorder(15, 10, 15, 10));
         
         JLabel formula = createInfoLabel("💡 Formula", "93% to Teachers, 7% to Institute");
         JLabel eligible = createInfoLabel("✓ Eligible", "Teachers with paid students");
@@ -71,13 +72,7 @@ public class SalaryManagementGUI extends JDialog {
         };
         
         salaryTable = new JTable(tableModel);
-        salaryTable.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        salaryTable.setRowHeight(30);
-        salaryTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
-        salaryTable.getTableHeader().setBackground(new Color(52, 73, 94));
-        salaryTable.getTableHeader().setForeground(Color.WHITE);
-        salaryTable.setSelectionBackground(new Color(52, 152, 219));
-        salaryTable.setSelectionForeground(Color.WHITE);
+        styleTable(salaryTable);
         
         JScrollPane scrollPane = new JScrollPane(salaryTable);
         
@@ -317,11 +312,7 @@ public class SalaryManagementGUI extends JDialog {
         };
         
         JTable historyTable = new JTable(historyModel);
-        historyTable.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        historyTable.setRowHeight(30);
-        historyTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
-        historyTable.getTableHeader().setBackground(new Color(52, 73, 94));
-        historyTable.getTableHeader().setForeground(Color.WHITE);
+        styleTable(historyTable);
         
         try {
             Connection conn = DatabaseUtil.getInstance().getConnection();
@@ -427,11 +418,7 @@ public class SalaryManagementGUI extends JDialog {
         };
         
         JTable revenueTable = new JTable(revenueModel);
-        revenueTable.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        revenueTable.setRowHeight(30);
-        revenueTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
-        revenueTable.getTableHeader().setBackground(new Color(52, 73, 94));
-        revenueTable.getTableHeader().setForeground(Color.WHITE);
+        styleTable(revenueTable);
         
         try {
             Connection conn = DatabaseUtil.getInstance().getConnection();
@@ -471,5 +458,45 @@ public class SalaryManagementGUI extends JDialog {
         
         dialog.add(new JScrollPane(revenueTable));
         dialog.setVisible(true);
+    }
+    
+    private void styleTable(JTable table) {
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        table.setRowHeight(30);
+        table.setGridColor(new Color(220, 220, 220));
+        table.setShowGrid(true);
+        table.setIntercellSpacing(new Dimension(1, 1));
+        
+        // Enhanced header styling - more visible and flat
+        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        table.getTableHeader().setBackground(new Color(41, 128, 185));
+        table.getTableHeader().setForeground(Color.WHITE);
+        table.getTableHeader().setPreferredSize(new Dimension(0, 40));
+        table.getTableHeader().setBorder(BorderFactory.createLineBorder(new Color(31, 97, 141), 2));
+        table.getTableHeader().setReorderingAllowed(false);
+        
+
+        // Custom renderer to FORCE colors
+        table.getTableHeader().setDefaultRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                JLabel label = (JLabel) super.getTableCellRendererComponent(
+                    table, value, isSelected, hasFocus, row, column);
+                label.setBackground(new Color(41, 128, 185));
+                label.setForeground(Color.WHITE);
+                label.setFont(new Font("Segoe UI", Font.BOLD, 14));
+                label.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createMatteBorder(0, 0, 2, 1, new Color(31, 97, 141)),
+                    BorderFactory.createEmptyBorder(10, 5, 10, 5)
+                ));
+                label.setHorizontalAlignment(SwingConstants.CENTER);
+                label.setOpaque(true);
+                return label;
+            }
+        });
+        
+        table.setSelectionBackground(new Color(52, 152, 219));
+        table.setSelectionForeground(Color.WHITE);
     }
 }
