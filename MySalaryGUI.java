@@ -1,6 +1,7 @@
 import java.awt.*;
 import java.sql.*;
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import lib.DatabaseUtil;
 
@@ -481,6 +482,27 @@ public class MySalaryGUI extends JDialog {
         table.getTableHeader().setPreferredSize(new Dimension(0, 40));
         table.getTableHeader().setBorder(BorderFactory.createLineBorder(new Color(31, 97, 141), 2));
         table.getTableHeader().setReorderingAllowed(false);
+        
+        // Custom renderer to FORCE colors
+        table.getTableHeader().setDefaultRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                JLabel label = (JLabel) super.getTableCellRendererComponent(
+                    table, value, isSelected, hasFocus, row, column);
+                label.setBackground(new Color(41, 128, 185));
+                label.setForeground(Color.WHITE);
+                label.setFont(new Font("Segoe UI", Font.BOLD, 14));
+                label.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createMatteBorder(0, 0, 2, 1, new Color(31, 97, 141)),
+                    BorderFactory.createEmptyBorder(10, 5, 10, 5)
+                ));
+                label.setHorizontalAlignment(SwingConstants.CENTER);
+                label.setOpaque(true);
+                return label;
+            }
+        });
+        
         
         table.setSelectionBackground(new Color(52, 152, 219));
         table.setSelectionForeground(Color.WHITE);
