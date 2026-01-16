@@ -1,8 +1,8 @@
+import java.awt.*;
+import java.sql.*;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-import java.awt.*;
-import java.sql.*;
 import lib.DatabaseUtil;
 
 public class UserManagementGUI extends JDialog {
@@ -387,10 +387,11 @@ public class UserManagementGUI extends JDialog {
         table.setShowGrid(true);
         table.setIntercellSpacing(new Dimension(1, 1));
         
-        // Enhanced header styling - more visible and flat
-        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        // FORCE header colors with custom renderer
+        table.getTableHeader().setOpaque(true);
         table.getTableHeader().setBackground(new Color(41, 128, 185));
         table.getTableHeader().setForeground(Color.WHITE);
+        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
         table.getTableHeader().setPreferredSize(new Dimension(0, 40));
         table.getTableHeader().setBorder(BorderFactory.createLineBorder(new Color(31, 97, 141), 2));
         table.getTableHeader().setReorderingAllowed(false);

@@ -389,10 +389,11 @@ public class RegistrationManagementGUI extends JDialog {
         table.setShowGrid(true);
         table.setIntercellSpacing(new Dimension(1, 1));
         
-        // Enhanced header styling - more visible and flat
-        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        // FORCE header colors with custom renderer
+        table.getTableHeader().setOpaque(true);
         table.getTableHeader().setBackground(new Color(41, 128, 185));
         table.getTableHeader().setForeground(Color.WHITE);
+        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
         table.getTableHeader().setPreferredSize(new Dimension(0, 40));
         table.getTableHeader().setBorder(BorderFactory.createLineBorder(new Color(31, 97, 141), 2));
         table.getTableHeader().setReorderingAllowed(false);
@@ -416,7 +417,6 @@ public class RegistrationManagementGUI extends JDialog {
                 return label;
             }
         });
-        
         
         table.setSelectionBackground(new Color(52, 152, 219));
         table.setSelectionForeground(Color.WHITE);
