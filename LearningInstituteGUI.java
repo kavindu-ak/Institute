@@ -423,13 +423,10 @@ public class LearningInstituteGUI extends JFrame {
                 // Create gradient paint
                 GradientPaint gradient;
                 if (getModel().isPressed()) {
-                    // Pressed state - reverse gradient
                     gradient = new GradientPaint(0, 0, lightColor.darker(), 0, height, darkColor);
                 } else if (getModel().isRollover()) {
-                    // Hover state - brighter
                     gradient = new GradientPaint(0, 0, darkColor.brighter(), 0, height, lightColor.brighter());
                 } else {
-                    // Normal state
                     gradient = new GradientPaint(0, 0, darkColor, 0, height, lightColor);
                 }
                 
@@ -468,7 +465,6 @@ public class LearningInstituteGUI extends JFrame {
         button.setBorderPainted(false);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
         
-        // Add shadow effect with border
         button.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createEmptyBorder(2, 2, 4, 2),
             BorderFactory.createEmptyBorder(8, 20, 8, 20)

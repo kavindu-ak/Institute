@@ -134,6 +134,7 @@ public class ReportsGUI extends JDialog {
             
         } catch (Exception e) {
             e.printStackTrace();
+            JOptionPane.showMessageDialog(reportDialog, "Error loading summary: " + e.getMessage());
         }
         
         // Table
@@ -152,16 +153,17 @@ public class ReportsGUI extends JDialog {
             String query = 
                 "SELECT s.s_id, s.s_name, s.nic, s.tp, " +
                 "COUNT(DISTINCT r.c_id) as course_count, " +
-                "COUNT(DISTINCT l.m_id) as module_count, " +
-                "COALESCE(SUM(m.cost), 0) as total_paid " +
+                "COUNT(DISTINCT CASE WHEN l.paid = 'yes' THEN l.m_id END) as module_count, " +
+                "COALESCE(SUM(CASE WHEN l.paid = 'yes' THEN m.cost ELSE 0 END), 0) as total_paid " +
                 "FROM student s " +
                 "LEFT JOIN registration r ON s.s_id = r.s_id " +
-                "LEFT JOIN learning l ON s.s_id = l.s_id AND l.paid = 'yes' " +
-                "LEFT JOIN modules m ON l.m_id = m.m_id " +
+                "LEFT JOIN learning l ON s.s_id = l.s_id " +
+                "LEFT JOIN modules m ON l.m_id = m.m_id AND l.paid = 'yes' " +
                 "GROUP BY s.s_id, s.s_name, s.nic, s.tp " +
                 "ORDER BY s.s_name";
             
-            ResultSet rs = conn.createStatement().executeQuery(query);
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(query);
             
             while (rs.next()) {
                 model.addRow(new Object[]{
@@ -176,11 +178,17 @@ public class ReportsGUI extends JDialog {
             }
             
             rs.close();
+            stmt.close();
             conn.close();
+            
+            if (model.getRowCount() == 0) {
+                model.addRow(new Object[]{"No data", "", "", "", "", "", ""});
+            }
             
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(reportDialog, "Error loading data: " + e.getMessage());
+            model.addRow(new Object[]{"Error loading data", "", "", "", "", "", ""});
         }
         
         JPanel mainPanel = new JPanel(new BorderLayout(0, 10));
@@ -270,7 +278,7 @@ public class ReportsGUI extends JDialog {
             
             String query = 
                 "SELECT t.t_id, t.t_name, m.m_name, c.c_name, " +
-                "COUNT(DISTINCT l.s_id) as student_count, " +
+                "COUNT(DISTINCT CASE WHEN l.paid = 'yes' THEN l.s_id END) as student_count, " +
                 "COALESCE(SUM(CASE WHEN l.paid = 'yes' THEN m.cost ELSE 0 END), 0) as revenue, " +
                 "CAST(COALESCE(SUM(CASE WHEN l.paid = 'yes' THEN m.cost ELSE 0 END), 0) * 0.93 AS SIGNED) as salary, " +
                 "t.paid " +
@@ -281,7 +289,8 @@ public class ReportsGUI extends JDialog {
                 "GROUP BY t.t_id, t.t_name, m.m_name, c.c_name, t.paid " +
                 "ORDER BY t.t_name";
             
-            ResultSet rs = conn.createStatement().executeQuery(query);
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(query);
             
             while (rs.next()) {
                 String status = "yes".equals(rs.getString("paid")) ? "✓ Paid" : "Pending";
@@ -299,11 +308,17 @@ public class ReportsGUI extends JDialog {
             }
             
             rs.close();
+            stmt.close();
             conn.close();
+            
+            if (model.getRowCount() == 0) {
+                model.addRow(new Object[]{"No data", "", "", "", "", "", "", ""});
+            }
             
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(reportDialog, "Error loading data: " + e.getMessage());
+            model.addRow(new Object[]{"Error loading data", "", "", "", "", "", "", ""});
         }
         
         JPanel mainPanel = new JPanel(new BorderLayout(0, 10));
@@ -401,7 +416,8 @@ public class ReportsGUI extends JDialog {
                 "LEFT JOIN teacher t ON m.m_id = t.m_id " +
                 "ORDER BY l.payment_date DESC";
             
-            ResultSet rs = conn.createStatement().executeQuery(query);
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(query);
             
             while (rs.next()) {
                 String status = "yes".equals(rs.getString("paid")) ? "✓ Paid" : "Unpaid";
@@ -419,11 +435,17 @@ public class ReportsGUI extends JDialog {
             }
             
             rs.close();
+            stmt.close();
             conn.close();
+            
+            if (model.getRowCount() == 0) {
+                model.addRow(new Object[]{"No data", "", "", "", "", "", ""});
+            }
             
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(reportDialog, "Error loading data: " + e.getMessage());
+            model.addRow(new Object[]{"Error loading data", "", "", "", "", "", ""});
         }
         
         JPanel mainPanel = new JPanel(new BorderLayout(0, 10));
@@ -517,7 +539,8 @@ public class ReportsGUI extends JDialog {
                 "WHERE s.paid = 'yes' " +
                 "ORDER BY s.payment_date DESC";
             
-            ResultSet rs = conn.createStatement().executeQuery(query);
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(query);
             
             while (rs.next()) {
                 int revenue = rs.getInt("total_revenue");
@@ -536,11 +559,17 @@ public class ReportsGUI extends JDialog {
             }
             
             rs.close();
+            stmt.close();
             conn.close();
+            
+            if (model.getRowCount() == 0) {
+                model.addRow(new Object[]{"No data", "", "", "", "", "", ""});
+            }
             
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(reportDialog, "Error loading data: " + e.getMessage());
+            model.addRow(new Object[]{"Error loading data", "", "", "", "", "", ""});
         }
         
         JPanel mainPanel = new JPanel(new BorderLayout(0, 10));
@@ -581,7 +610,6 @@ public class ReportsGUI extends JDialog {
         table.setShowGrid(true);
         table.setIntercellSpacing(new Dimension(1, 1));
         
-        // Enhanced header styling - more visible and flat
         table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
         table.getTableHeader().setBackground(new Color(41, 128, 185));
         table.getTableHeader().setForeground(Color.WHITE);
@@ -589,7 +617,6 @@ public class ReportsGUI extends JDialog {
         table.getTableHeader().setBorder(BorderFactory.createLineBorder(new Color(31, 97, 141), 2));
         table.getTableHeader().setReorderingAllowed(false);
         
-        // Custom renderer to FORCE colors
         table.getTableHeader().setDefaultRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value,
