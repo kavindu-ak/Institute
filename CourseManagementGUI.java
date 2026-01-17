@@ -181,7 +181,6 @@ class CourseManagementGUI extends JDialog {
         table.setShowGrid(true);
         table.setIntercellSpacing(new Dimension(1, 1));
         
-        // Enhanced header styling - more visible and flat
         table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
         table.getTableHeader().setBackground(new Color(41, 128, 185));
         table.getTableHeader().setForeground(Color.WHITE);
@@ -189,7 +188,6 @@ class CourseManagementGUI extends JDialog {
         table.getTableHeader().setBorder(BorderFactory.createLineBorder(new Color(31, 97, 141), 2));
         table.getTableHeader().setReorderingAllowed(false);
         
-        // Custom renderer to FORCE colors
         table.getTableHeader().setDefaultRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value,
@@ -208,7 +206,6 @@ class CourseManagementGUI extends JDialog {
                 return label;
             }
         });
-        
         
         table.setSelectionBackground(new Color(52, 152, 219));
         table.setSelectionForeground(Color.WHITE);
@@ -438,7 +435,6 @@ class ModuleManagementGUI extends JDialog {
         table.getTableHeader().setForeground(Color.WHITE);
         table.setSelectionBackground(new Color(52, 152, 219));
         
-        // Custom renderer to FORCE colors
         table.getTableHeader().setDefaultRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value,
@@ -457,7 +453,6 @@ class ModuleManagementGUI extends JDialog {
                 return label;
             }
         });
-        
     }
     
     private void showError(String msg) {
@@ -532,18 +527,5 @@ class ReportsGUI extends JDialog {
         card.add(viewButton, BorderLayout.SOUTH);
         
         return card;
-    }
-}
-
-// MySalaryGUI.java - Placeholder
-class MySalaryGUI extends JDialog {
-    public MySalaryGUI(JFrame parent, String username) {
-        super(parent, "My Salary", true);
-        setSize(900, 550);
-        setLocationRelativeTo(parent);
-        
-        JLabel label = new JLabel("My Salary Information - Feature Available", SwingConstants.CENTER);
-        label.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        add(label);
     }
 }

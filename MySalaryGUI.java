@@ -7,7 +7,7 @@ import lib.DatabaseUtil;
 
 public class MySalaryGUI extends JDialog {
     
-    private String teacherUsername;
+    private int teacherId;
     private JTable salaryHistoryTable;
     private DefaultTableModel historyTableModel;
     private JTable studentPaymentsTable;
@@ -18,10 +18,11 @@ public class MySalaryGUI extends JDialog {
     private JLabel studentsPaidValue;
     private JLabel pendingSalaryValue;
     private JLabel moduleValue;
+    private JLabel teacherNameLabel;
     
-    public MySalaryGUI(JFrame parent, String username) {
+    public MySalaryGUI(JFrame parent, int teacherId) {
         super(parent, "My Salary Information", true);
-        this.teacherUsername = username;
+        this.teacherId = teacherId;
         
         setSize(1100, 700);
         setLocationRelativeTo(parent);
@@ -42,15 +43,15 @@ public class MySalaryGUI extends JDialog {
         titleLabel.setForeground(Color.WHITE);
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
-        JLabel userLabel = new JLabel("Teacher: " + username);
-        userLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        userLabel.setForeground(new Color(200, 200, 200));
-        userLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        teacherNameLabel = new JLabel("Teacher ID: " + teacherId);
+        teacherNameLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        teacherNameLabel.setForeground(new Color(200, 200, 200));
+        teacherNameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
         titlePanel.add(Box.createVerticalGlue());
         titlePanel.add(titleLabel);
         titlePanel.add(Box.createVerticalStrut(5));
-        titlePanel.add(userLabel);
+        titlePanel.add(teacherNameLabel);
         titlePanel.add(Box.createVerticalGlue());
         
         headerPanel.add(titlePanel, BorderLayout.CENTER);
@@ -206,66 +207,63 @@ public class MySalaryGUI extends JDialog {
             Class.forName("com.mysql.cj.jdbc.Driver");
             Connection conn = DatabaseUtil.getInstance().getConnection();
             
-            // First, get the teacher's full name from users table
-            String getUserQuery = "SELECT full_name FROM users WHERE username = ? AND role = 'teacher'";
-            PreparedStatement getUserStmt = conn.prepareStatement(getUserQuery);
-            getUserStmt.setString(1, teacherUsername);
-            ResultSet userRs = getUserStmt.executeQuery();
+            System.out.println("=== MySalaryGUI Debug Info ===");
+            System.out.println("Teacher ID: " + teacherId);
             
-            if (!userRs.next()) {
-                JOptionPane.showMessageDialog(this,
-                    "No teacher user found for username: " + teacherUsername,
-                    "User Not Found",
-                    JOptionPane.ERROR_MESSAGE);
-                userRs.close();
-                getUserStmt.close();
-                conn.close();
-                return;
-            }
-            
-            String teacherFullName = userRs.getString("full_name");
-            userRs.close();
-            getUserStmt.close();
-            
-            // Now get teacher information by matching full_name with t_name
+            // Get teacher information by ID
             String teacherQuery = "SELECT t.t_id, t.t_name, m.m_name, m.m_id, m.cost, c.c_name " +
                                  "FROM teacher t " +
                                  "INNER JOIN modules m ON t.m_id = m.m_id " +
                                  "INNER JOIN course c ON m.c_id = c.c_id " +
-                                 "WHERE t.t_name = ?";
+                                 "WHERE t.t_id = ?";
             
             PreparedStatement teacherStmt = conn.prepareStatement(teacherQuery);
-            teacherStmt.setString(1, teacherFullName);
+            teacherStmt.setInt(1, teacherId);
             ResultSet teacherRs = teacherStmt.executeQuery();
             
             if (!teacherRs.next()) {
                 JOptionPane.showMessageDialog(this,
-                    "No teacher record found in database.\n\n" +
-                    "Username: " + teacherUsername + "\n" +
-                    "Full Name: " + teacherFullName + "\n\n" +
-                    "Please ensure the teacher's name in the 'teacher' table matches their full name in the 'users' table.",
-                    "Teacher Record Not Found",
-                    JOptionPane.WARNING_MESSAGE);
+                    "Teacher record not found!\n\n" +
+                    "Teacher ID: " + teacherId + "\n\n" +
+                    "Please contact an administrator.",
+                    "Teacher Not Found",
+                    JOptionPane.ERROR_MESSAGE);
+                
                 teacherRs.close();
                 teacherStmt.close();
                 conn.close();
+                
+                if (moduleValue != null) {
+                    moduleValue.setText("Not Found");
+                }
                 return;
             }
             
-            int teacherId = teacherRs.getInt("t_id");
+            String teacherName = teacherRs.getString("t_name");
             String moduleName = teacherRs.getString("m_name");
             int moduleId = teacherRs.getInt("m_id");
             int moduleCost = teacherRs.getInt("cost");
             String courseName = teacherRs.getString("c_name");
             
+            // Update header with teacher name
+            if (teacherNameLabel != null) {
+                teacherNameLabel.setText("Teacher: " + teacherName);
+            }
+            
+            System.out.println("\n✓ Teacher found!");
+            System.out.println("  Name: " + teacherName);
+            System.out.println("  Module: " + moduleName);
+            System.out.println("  Course: " + courseName);
+            System.out.println("  Module Cost: Rs. " + moduleCost);
+            
             teacherRs.close();
             teacherStmt.close();
             
             // Update summary cards
-            updateSummaryCards(conn, teacherId, moduleId, moduleName, moduleCost);
+            updateSummaryCards(conn, moduleId, moduleName, moduleCost);
             
             // Load salary history
-            loadSalaryHistory(conn, teacherId);
+            loadSalaryHistory(conn);
             
             // Load student payments
             loadStudentPayments(conn, moduleId, moduleCost);
@@ -275,13 +273,13 @@ public class MySalaryGUI extends JDialog {
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this,
-                "Error loading data: " + e.getMessage(),
+                "Error loading data:\n" + e.getMessage() + "\n\nCheck console for details.",
                 "Database Error",
                 JOptionPane.ERROR_MESSAGE);
         }
     }
     
-    private void updateSummaryCards(Connection conn, int teacherId, int moduleId, String moduleName, int moduleCost) throws SQLException {
+    private void updateSummaryCards(Connection conn, int moduleId, String moduleName, int moduleCost) throws SQLException {
         // Get total earned (sum of all salary payments)
         String totalQuery = "SELECT COALESCE(SUM(salary), 0) as total_earned FROM salary WHERE t_id = ? AND paid = 'yes'";
         PreparedStatement totalStmt = conn.prepareStatement(totalQuery);
@@ -310,6 +308,12 @@ public class MySalaryGUI extends JDialog {
         int totalRevenue = studentsPaid * moduleCost;
         int pendingSalary = totalRevenue - totalEarned;
         
+        System.out.println("\nSummary Cards:");
+        System.out.println("  Total Earned: Rs. " + totalEarned);
+        System.out.println("  Students Paid: " + studentsPaid);
+        System.out.println("  Pending Salary: Rs. " + pendingSalary);
+        System.out.println("  Module: " + moduleName);
+        
         // Update the summary cards
         if (totalEarnedValue != null) {
             totalEarnedValue.setText(String.format("Rs. %,d", totalEarned));
@@ -325,7 +329,7 @@ public class MySalaryGUI extends JDialog {
         }
     }
     
-    private void loadSalaryHistory(Connection conn, int teacherId) throws SQLException {
+    private void loadSalaryHistory(Connection conn) throws SQLException {
         String query = "SELECT s.payment_date, m.m_name, s.student_count, s.total_revenue, s.salary, s.paid " +
                       "FROM salary s " +
                       "INNER JOIN teacher t ON s.t_id = t.t_id " +
@@ -337,6 +341,7 @@ public class MySalaryGUI extends JDialog {
         stmt.setInt(1, teacherId);
         ResultSet rs = stmt.executeQuery();
         
+        int rowCount = 0;
         while (rs.next()) {
             String status = "yes".equals(rs.getString("paid")) ? "✓ Paid" : "Pending";
             
@@ -348,7 +353,10 @@ public class MySalaryGUI extends JDialog {
                 String.format("Rs. %,d", rs.getInt("salary")),
                 status
             });
+            rowCount++;
         }
+        
+        System.out.println("\nSalary History: " + rowCount + " records loaded");
         
         if (historyTableModel.getRowCount() == 0) {
             historyTableModel.addRow(new Object[]{
@@ -372,6 +380,7 @@ public class MySalaryGUI extends JDialog {
         stmt.setInt(1, moduleId);
         ResultSet rs = stmt.executeQuery();
         
+        int rowCount = 0;
         while (rs.next()) {
             String status = "yes".equals(rs.getString("paid")) ? "✓ Paid" : "Unpaid";
             
@@ -383,7 +392,10 @@ public class MySalaryGUI extends JDialog {
                 String.format("Rs. %,d", moduleCost),
                 status
             });
+            rowCount++;
         }
+        
+        System.out.println("Student Payments: " + rowCount + " records loaded");
         
         if (paymentsTableModel.getRowCount() == 0) {
             paymentsTableModel.addRow(new Object[]{
@@ -400,44 +412,27 @@ public class MySalaryGUI extends JDialog {
             Class.forName("com.mysql.cj.jdbc.Driver");
             Connection conn = DatabaseUtil.getInstance().getConnection();
             
-            // Get teacher's full name from users table
-            String getUserQuery = "SELECT full_name FROM users WHERE username = ? AND role = 'teacher'";
-            PreparedStatement getUserStmt = conn.prepareStatement(getUserQuery);
-            getUserStmt.setString(1, teacherUsername);
-            ResultSet userRs = getUserStmt.executeQuery();
-            
-            if (!userRs.next()) {
-                textArea.setText("No teacher user found.");
-                userRs.close();
-                getUserStmt.close();
-                conn.close();
-                return;
-            }
-            
-            String teacherFullName = userRs.getString("full_name");
-            userRs.close();
-            getUserStmt.close();
-            
-            // Get teacher info matching full_name with t_name
+            // Get teacher info by ID
             String teacherQuery = "SELECT t.t_id, t.t_name, m.m_name, m.m_id, m.cost, c.c_name " +
                                  "FROM teacher t " +
                                  "INNER JOIN modules m ON t.m_id = m.m_id " +
                                  "INNER JOIN course c ON m.c_id = c.c_id " +
-                                 "WHERE t.t_name = ?";
+                                 "WHERE t.t_id = ?";
             
             PreparedStatement stmt = conn.prepareStatement(teacherQuery);
-            stmt.setString(1, teacherFullName);
+            stmt.setInt(1, teacherId);
             ResultSet rs = stmt.executeQuery();
             
             if (!rs.next()) {
-                textArea.setText("No teacher record found in database.");
+                textArea.setText("Teacher record not found in database.\n\n" +
+                               "Teacher ID: " + teacherId);
                 rs.close();
                 stmt.close();
                 conn.close();
                 return;
             }
             
-            int teacherId = rs.getInt("t_id");
+            String teacherName = rs.getString("t_name");
             String moduleName = rs.getString("m_name");
             int moduleId = rs.getInt("m_id");
             int moduleCost = rs.getInt("cost");
@@ -477,7 +472,8 @@ public class MySalaryGUI extends JDialog {
             details.append("                REVENUE DETAILS\n");
             details.append("═══════════════════════════════════════════════════════\n\n");
             
-            details.append("Teacher: ").append(teacherFullName).append("\n");
+            details.append("Teacher: ").append(teacherName).append("\n");
+            details.append("Teacher ID: ").append(teacherId).append("\n");
             details.append("Module: ").append(moduleName).append("\n");
             details.append("Course: ").append(courseName).append("\n");
             details.append("Module Cost: Rs. ").append(String.format("%,d", moduleCost)).append(" per student\n\n");
@@ -515,7 +511,7 @@ public class MySalaryGUI extends JDialog {
             
         } catch (Exception e) {
             e.printStackTrace();
-            textArea.setText("Error loading revenue details: " + e.getMessage());
+            textArea.setText("Error loading revenue details:\n" + e.getMessage() + "\n\nCheck console for details.");
         }
     }
     
@@ -526,7 +522,6 @@ public class MySalaryGUI extends JDialog {
         table.setShowGrid(true);
         table.setIntercellSpacing(new Dimension(1, 1));
         
-        // Enhanced header styling - more visible and flat
         table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
         table.getTableHeader().setBackground(new Color(41, 128, 185));
         table.getTableHeader().setForeground(Color.WHITE);
@@ -534,7 +529,6 @@ public class MySalaryGUI extends JDialog {
         table.getTableHeader().setBorder(BorderFactory.createLineBorder(new Color(31, 97, 141), 2));
         table.getTableHeader().setReorderingAllowed(false);
         
-        // Custom renderer to FORCE colors
         table.getTableHeader().setDefaultRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value,
@@ -553,7 +547,6 @@ public class MySalaryGUI extends JDialog {
                 return label;
             }
         });
-        
         
         table.setSelectionBackground(new Color(52, 152, 219));
         table.setSelectionForeground(Color.WHITE);

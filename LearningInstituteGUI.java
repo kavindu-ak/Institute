@@ -12,6 +12,7 @@ public class LearningInstituteGUI extends JFrame {
     private String currentUsername;
     private String currentRole;
     private int currentUserId;
+    private Integer currentTeacherId; // Store teacher ID for teacher accounts
     
     public LearningInstituteGUI() {
         setTitle("Learning Institute Management System");
@@ -156,7 +157,7 @@ public class LearningInstituteGUI extends JFrame {
             Class.forName("com.mysql.cj.jdbc.Driver");
             Connection conn = DatabaseUtil.getInstance().getConnection();
             
-            String query = "SELECT user_id, username, password, role, full_name FROM users WHERE username = ?";
+            String query = "SELECT user_id, username, password, role, full_name, teacher_id FROM users WHERE username = ?";
             PreparedStatement stmt = conn.prepareStatement(query);
             stmt.setString(1, username);
             
@@ -170,6 +171,14 @@ public class LearningInstituteGUI extends JFrame {
                     currentUsername = rs.getString("username");
                     currentUser = rs.getString("full_name");
                     currentRole = rs.getString("role");
+                    
+                    // Store teacher_id if this is a teacher account
+                    Object teacherIdObj = rs.getObject("teacher_id");
+                    if (teacherIdObj != null) {
+                        currentTeacherId = (Integer) teacherIdObj;
+                    } else {
+                        currentTeacherId = null;
+                    }
                     
                     rs.close();
                     stmt.close();
@@ -326,6 +335,7 @@ public class LearningInstituteGUI extends JFrame {
             currentUsername = null;
             currentRole = null;
             currentUserId = -1;
+            currentTeacherId = null;
             
             // Remove dashboard and show login
             for (Component comp : mainPanel.getComponents()) {
@@ -380,7 +390,17 @@ public class LearningInstituteGUI extends JFrame {
     }
     
     private void openMySalary() {
-        new MySalaryGUI(this, currentUsername).setVisible(true);
+        // Pass the teacher ID to MySalaryGUI
+        if (currentTeacherId != null) {
+            new MySalaryGUI(this, currentTeacherId).setVisible(true);
+        } else {
+            JOptionPane.showMessageDialog(this,
+                "Teacher account not properly linked!\n\n" +
+                "Please contact an administrator to link your\n" +
+                "user account to a teacher record.",
+                "Account Not Linked",
+                JOptionPane.WARNING_MESSAGE);
+        }
     }
     
     /**

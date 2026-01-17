@@ -15,7 +15,7 @@ public class UserManagementGUI extends JDialog {
         super(parent, "User Management", true);
         this.parent = parent;
         
-        setSize(1000, 600);
+        setSize(1100, 600);
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout(10, 10));
         
@@ -48,7 +48,7 @@ public class UserManagementGUI extends JDialog {
         buttonPanel.add(deleteButton);
         
         // Table
-        String[] columns = {"User ID", "Username", "Full Name", "Role", "Created At"};
+        String[] columns = {"User ID", "Username", "Full Name", "Role", "Teacher ID", "Created At"};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -93,16 +93,20 @@ public class UserManagementGUI extends JDialog {
             Class.forName("com.mysql.cj.jdbc.Driver");
             Connection conn = DatabaseUtil.getInstance().getConnection();
             
-            String query = "SELECT user_id, username, full_name, role, created_at FROM users ORDER BY role, full_name";
+            String query = "SELECT user_id, username, full_name, role, teacher_id, created_at FROM users ORDER BY role, full_name";
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery(query);
             
             while (rs.next()) {
+                Object teacherId = rs.getObject("teacher_id");
+                String teacherIdStr = (teacherId != null) ? String.valueOf(teacherId) : "-";
+                
                 Object[] row = {
                     rs.getInt("user_id"),
                     rs.getString("username"),
                     rs.getString("full_name"),
                     rs.getString("role").toUpperCase(),
+                    teacherIdStr,
                     rs.getString("created_at")
                 };
                 tableModel.addRow(row);
@@ -123,7 +127,7 @@ public class UserManagementGUI extends JDialog {
     
     private void showAddUserDialog() {
         JDialog dialog = new JDialog(this, "Add New User", true);
-        dialog.setSize(550, 450);
+        dialog.setSize(550, 550);
         dialog.setLocationRelativeTo(this);
         dialog.setLayout(new BorderLayout());
         
@@ -140,6 +144,7 @@ public class UserManagementGUI extends JDialog {
         JPasswordField passwordField = new JPasswordField(20);
         JPasswordField confirmPasswordField = new JPasswordField(20);
         JComboBox<String> roleBox = new JComboBox<>(new String[]{"Admin", "Staff", "Teacher"});
+        JComboBox<TeacherItem> teacherBox = new JComboBox<>();
         
         Font fieldFont = new Font("Segoe UI", Font.PLAIN, 14);
         fullNameField.setFont(fieldFont);
@@ -147,6 +152,27 @@ public class UserManagementGUI extends JDialog {
         passwordField.setFont(fieldFont);
         confirmPasswordField.setFont(fieldFont);
         roleBox.setFont(fieldFont);
+        teacherBox.setFont(fieldFont);
+        
+        // Initially hide teacher selection
+        teacherBox.setVisible(false);
+        JLabel teacherLabel = new JLabel("Select Teacher:");
+        teacherLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        teacherLabel.setVisible(false);
+        
+        // Load teachers when role changes to "Teacher"
+        roleBox.addActionListener(e -> {
+            boolean isTeacher = "Teacher".equals(roleBox.getSelectedItem());
+            teacherLabel.setVisible(isTeacher);
+            teacherBox.setVisible(isTeacher);
+            
+            if (isTeacher && teacherBox.getItemCount() == 0) {
+                loadAvailableTeachers(teacherBox);
+            }
+            
+            dialog.pack();
+            dialog.setSize(550, isTeacher ? 600 : 550);
+        });
         
         int row = 0;
         addFormField(formPanel, gbc, row++, "Full Name:", fullNameField);
@@ -154,6 +180,18 @@ public class UserManagementGUI extends JDialog {
         addFormField(formPanel, gbc, row++, "Password:", passwordField);
         addFormField(formPanel, gbc, row++, "Confirm Password:", confirmPasswordField);
         addFormField(formPanel, gbc, row++, "Role:", roleBox);
+        
+        // Teacher selection (hidden initially)
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        gbc.weightx = 0.3;
+        gbc.gridwidth = 1;
+        formPanel.add(teacherLabel, gbc);
+        
+        gbc.gridx = 1;
+        gbc.weightx = 0.7;
+        formPanel.add(teacherBox, gbc);
+        row++;
         
         // Info label
         gbc.gridx = 0;
@@ -193,6 +231,20 @@ public class UserManagementGUI extends JDialog {
                 return;
             }
             
+            // For teacher role, teacher must be selected
+            Integer teacherId = null;
+            if (role.equals("teacher")) {
+                TeacherItem selectedTeacher = (TeacherItem) teacherBox.getSelectedItem();
+                if (selectedTeacher == null || selectedTeacher.getId() == 0) {
+                    JOptionPane.showMessageDialog(dialog, 
+                        "Please select a teacher from the list!\n\nIf no teachers are available, add a teacher first in Teacher Management.", 
+                        "Validation Error", 
+                        JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                teacherId = selectedTeacher.getId();
+            }
+            
             try {
                 Class.forName("com.mysql.cj.jdbc.Driver");
                 Connection conn = DatabaseUtil.getInstance().getConnection();
@@ -216,13 +268,39 @@ public class UserManagementGUI extends JDialog {
                 checkRs.close();
                 checkStmt.close();
                 
+                // If teacher role, check if teacher_id already has a user account
+                if (teacherId != null) {
+                    String checkTeacherQuery = "SELECT username FROM users WHERE teacher_id = ?";
+                    PreparedStatement checkTeacherStmt = conn.prepareStatement(checkTeacherQuery);
+                    checkTeacherStmt.setInt(1, teacherId);
+                    ResultSet teacherRs = checkTeacherStmt.executeQuery();
+                    
+                    if (teacherRs.next()) {
+                        JOptionPane.showMessageDialog(dialog, 
+                            "This teacher already has a user account!\n\nUsername: " + teacherRs.getString("username"), 
+                            "Teacher Already Linked", 
+                            JOptionPane.ERROR_MESSAGE);
+                        teacherRs.close();
+                        checkTeacherStmt.close();
+                        conn.close();
+                        return;
+                    }
+                    teacherRs.close();
+                    checkTeacherStmt.close();
+                }
+                
                 // Insert new user
-                String sql = "INSERT INTO users (username, password, role, full_name) VALUES (?, ?, ?, ?)";
+                String sql = "INSERT INTO users (username, password, role, full_name, teacher_id) VALUES (?, ?, ?, ?, ?)";
                 PreparedStatement stmt = conn.prepareStatement(sql);
                 stmt.setString(1, username);
                 stmt.setString(2, password); // In production, hash this!
                 stmt.setString(3, role);
                 stmt.setString(4, fullName);
+                if (teacherId != null) {
+                    stmt.setInt(5, teacherId);
+                } else {
+                    stmt.setNull(5, java.sql.Types.INTEGER);
+                }
                 
                 int rows = stmt.executeUpdate();
                 
@@ -234,8 +312,9 @@ public class UserManagementGUI extends JDialog {
                         "User created successfully!\n\n" +
                         "Username: %s\n" +
                         "Full Name: %s\n" +
-                        "Role: %s\n\n" +
-                        "The user can now login with these credentials.",
+                        "Role: %s\n" +
+                        (teacherId != null ? "Linked to Teacher ID: " + teacherId + "\n" : "") +
+                        "\nThe user can now login with these credentials.",
                         username, fullName, role.toUpperCase()
                     );
                     
@@ -259,6 +338,50 @@ public class UserManagementGUI extends JDialog {
         dialog.add(buttonPanel, BorderLayout.SOUTH);
         
         dialog.setVisible(true);
+    }
+    
+    private void loadAvailableTeachers(JComboBox<TeacherItem> teacherBox) {
+        teacherBox.removeAllItems();
+        
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            Connection conn = DatabaseUtil.getInstance().getConnection();
+            
+            // Get teachers who don't have user accounts yet
+            String query = "SELECT t.t_id, t.t_name, m.m_name, c.c_name " +
+                          "FROM teacher t " +
+                          "INNER JOIN modules m ON t.m_id = m.m_id " +
+                          "INNER JOIN course c ON m.c_id = c.c_id " +
+                          "WHERE t.t_id NOT IN (SELECT teacher_id FROM users WHERE teacher_id IS NOT NULL) " +
+                          "ORDER BY t.t_name";
+            
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(query);
+            
+            while (rs.next()) {
+                teacherBox.addItem(new TeacherItem(
+                    rs.getInt("t_id"),
+                    rs.getString("t_name"),
+                    rs.getString("m_name"),
+                    rs.getString("c_name")
+                ));
+            }
+            
+            rs.close();
+            stmt.close();
+            conn.close();
+            
+            if (teacherBox.getItemCount() == 0) {
+                teacherBox.addItem(new TeacherItem(0, "No available teachers", "", ""));
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, 
+                "Error loading teachers: " + e.getMessage(), 
+                "Database Error", 
+                JOptionPane.ERROR_MESSAGE);
+        }
     }
     
     private void addFormField(JPanel panel, GridBagConstraints gbc, int row, String label, JComponent field) {
@@ -286,7 +409,8 @@ public class UserManagementGUI extends JDialog {
         String username = (String) tableModel.getValueAt(selectedRow, 1);
         String fullName = (String) tableModel.getValueAt(selectedRow, 2);
         String role = (String) tableModel.getValueAt(selectedRow, 3);
-        String createdAt = (String) tableModel.getValueAt(selectedRow, 4);
+        String teacherId = (String) tableModel.getValueAt(selectedRow, 4);
+        String createdAt = (String) tableModel.getValueAt(selectedRow, 5);
         
         String details = String.format(
             "<html><body style='width: 350px; padding: 10px;'>" +
@@ -296,11 +420,12 @@ public class UserManagementGUI extends JDialog {
             "<tr><td><b>Username:</b></td><td>%s</td></tr>" +
             "<tr><td><b>Full Name:</b></td><td>%s</td></tr>" +
             "<tr><td><b>Role:</b></td><td>%s</td></tr>" +
+            "<tr><td><b>Teacher ID:</b></td><td>%s</td></tr>" +
             "<tr><td><b>Created:</b></td><td>%s</td></tr>" +
             "</table>" +
             "<br><p style='color: #7f8c8d;'><i>Tip: Users can change their own passwords from the main menu</i></p>" +
             "</body></html>",
-            userId, username, fullName, role, createdAt
+            userId, username, fullName, role, teacherId, createdAt
         );
         
         JOptionPane.showMessageDialog(this, details, "User Details", JOptionPane.INFORMATION_MESSAGE);
@@ -387,7 +512,6 @@ public class UserManagementGUI extends JDialog {
         table.setShowGrid(true);
         table.setIntercellSpacing(new Dimension(1, 1));
         
-        // FORCE header colors with custom renderer
         table.getTableHeader().setOpaque(true);
         table.getTableHeader().setBackground(new Color(41, 128, 185));
         table.getTableHeader().setForeground(Color.WHITE);
@@ -396,7 +520,6 @@ public class UserManagementGUI extends JDialog {
         table.getTableHeader().setBorder(BorderFactory.createLineBorder(new Color(31, 97, 141), 2));
         table.getTableHeader().setReorderingAllowed(false);
         
-        // Custom renderer to FORCE colors
         table.getTableHeader().setDefaultRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value,
@@ -418,5 +541,30 @@ public class UserManagementGUI extends JDialog {
         
         table.setSelectionBackground(new Color(52, 152, 219));
         table.setSelectionForeground(Color.WHITE);
+    }
+    
+    // Helper class
+    private static class TeacherItem {
+        private int id;
+        private String name;
+        private String module;
+        private String course;
+        
+        public TeacherItem(int id, String name, String module, String course) {
+            this.id = id;
+            this.name = name;
+            this.module = module;
+            this.course = course;
+        }
+        
+        public int getId() {
+            return id;
+        }
+        
+        @Override
+        public String toString() {
+            if (id == 0) return name;
+            return String.format("%s - %s (%s)", name, module, course);
+        }
     }
 }
