@@ -99,13 +99,8 @@ public class LearningInstituteGUI extends JFrame {
         boxGbc.gridy++;
         boxGbc.gridwidth = 2;
         
-        JButton loginButton = new JButton("Login");
-        loginButton.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        loginButton.setBackground(new Color(39, 60, 117));
-        loginButton.setForeground(Color.WHITE);
-        loginButton.setFocusPainted(false);
-        loginButton.setPreferredSize(new Dimension(200, 40));
-        loginButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        // Create BLUE RIBBON login button
+        JButton loginButton = createRibbonButton("Login", new Color(41, 128, 185), new Color(52, 152, 219));
         
         loginButton.addActionListener(e -> {
             String username = userField.getText().trim();
@@ -218,12 +213,8 @@ public class LearningInstituteGUI extends JFrame {
         userLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         userLabel.setForeground(Color.WHITE);
         
-        JButton logoutBtn = new JButton("Logout");
-        logoutBtn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        logoutBtn.setBackground(new Color(231, 76, 60));
-        logoutBtn.setForeground(Color.WHITE);
-        logoutBtn.setFocusPainted(false);
-        logoutBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        // Create RED RIBBON logout button
+        JButton logoutBtn = createRibbonButton("Logout", new Color(192, 57, 43), new Color(231, 76, 60));
         logoutBtn.addActionListener(e -> logout());
         
         userPanel.add(userLabel);
@@ -242,26 +233,15 @@ public class LearningInstituteGUI extends JFrame {
         JPanel sidebar = createSidebar();
         splitPane.setLeftComponent(sidebar);
         
-        // Content area - Show salary info for teachers automatically
+        // Content area - Welcome message
         JPanel contentArea = new JPanel(new BorderLayout());
         contentArea.setBackground(Color.WHITE);
         
-        if (currentRole.equalsIgnoreCase("teacher")) {
-            // For teachers, automatically open salary view
-            SwingUtilities.invokeLater(() -> openMySalary());
-            
-            JLabel welcomeLabel = new JLabel("<html><div style='text-align: center;'>" +
-                "<h1>Welcome, " + currentUser + "!</h1>" +
-                "<p style='color: #666; font-size: 14px;'>Your salary information is loading...</p>" +
-                "</div></html>", SwingConstants.CENTER);
-            contentArea.add(welcomeLabel, BorderLayout.CENTER);
-        } else {
-            JLabel welcomeLabel = new JLabel("<html><div style='text-align: center;'>" +
-                "<h1>Welcome, " + currentUser + "!</h1>" +
-                "<p style='color: #666; font-size: 14px;'>Select an option from the menu to get started.</p>" +
-                "</div></html>", SwingConstants.CENTER);
-            contentArea.add(welcomeLabel, BorderLayout.CENTER);
-        }
+        JLabel welcomeLabel = new JLabel("<html><div style='text-align: center;'>" +
+            "<h1>Welcome, " + currentUser + "!</h1>" +
+            "<p style='color: #666; font-size: 14px;'>Select an option from the menu to get started.</p>" +
+            "</div></html>", SwingConstants.CENTER);
+        contentArea.add(welcomeLabel, BorderLayout.CENTER);
         
         splitPane.setRightComponent(contentArea);
         
@@ -401,6 +381,80 @@ public class LearningInstituteGUI extends JFrame {
     
     private void openMySalary() {
         new MySalaryGUI(this, currentUsername).setVisible(true);
+    }
+    
+    /**
+     * Creates a modern ribbon-style button with gradient and 3D effect
+     * @param text Button text
+     * @param darkColor Darker shade for gradient top
+     * @param lightColor Lighter shade for gradient bottom
+     * @return Styled ribbon button
+     */
+    private JButton createRibbonButton(String text, Color darkColor, Color lightColor) {
+        JButton button = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                int width = getWidth();
+                int height = getHeight();
+                
+                // Create gradient paint
+                GradientPaint gradient;
+                if (getModel().isPressed()) {
+                    // Pressed state - reverse gradient
+                    gradient = new GradientPaint(0, 0, lightColor.darker(), 0, height, darkColor);
+                } else if (getModel().isRollover()) {
+                    // Hover state - brighter
+                    gradient = new GradientPaint(0, 0, darkColor.brighter(), 0, height, lightColor.brighter());
+                } else {
+                    // Normal state
+                    gradient = new GradientPaint(0, 0, darkColor, 0, height, lightColor);
+                }
+                
+                g2d.setPaint(gradient);
+                g2d.fillRoundRect(0, 0, width, height, 8, 8);
+                
+                // Add glossy effect on top half
+                GradientPaint gloss = new GradientPaint(
+                    0, 0, new Color(255, 255, 255, 60),
+                    0, height / 2, new Color(255, 255, 255, 10)
+                );
+                g2d.setPaint(gloss);
+                g2d.fillRoundRect(0, 0, width, height / 2, 8, 8);
+                
+                // Draw border
+                g2d.setColor(darkColor.darker());
+                g2d.setStroke(new BasicStroke(2));
+                g2d.drawRoundRect(1, 1, width - 2, height - 2, 8, 8);
+                
+                // Draw inner highlight
+                g2d.setColor(new Color(255, 255, 255, 40));
+                g2d.drawRoundRect(2, 2, width - 4, height - 4, 6, 6);
+                
+                g2d.dispose();
+                
+                // Paint text
+                super.paintComponent(g);
+            }
+        };
+        
+        button.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        button.setForeground(Color.WHITE);
+        button.setPreferredSize(new Dimension(200, 45));
+        button.setContentAreaFilled(false);
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        // Add shadow effect with border
+        button.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createEmptyBorder(2, 2, 4, 2),
+            BorderFactory.createEmptyBorder(8, 20, 8, 20)
+        ));
+        
+        return button;
     }
     
     public static void main(String[] args) {

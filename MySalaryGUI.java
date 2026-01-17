@@ -13,6 +13,12 @@ public class MySalaryGUI extends JDialog {
     private JTable studentPaymentsTable;
     private DefaultTableModel paymentsTableModel;
     
+    // Summary card components for updating
+    private JLabel totalEarnedValue;
+    private JLabel studentsPaidValue;
+    private JLabel pendingSalaryValue;
+    private JLabel moduleValue;
+    
     public MySalaryGUI(JFrame parent, String username) {
         super(parent, "My Salary Information", true);
         this.teacherUsername = username;
@@ -86,7 +92,7 @@ public class MySalaryGUI extends JDialog {
         panel.setBackground(Color.WHITE);
         panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         
-        // These will be updated with actual data
+        // Create cards and store references to value labels
         JPanel totalEarnedCard = createSummaryCard("Total Earned", "Rs. 0", new Color(46, 204, 113));
         JPanel studentsPaidCard = createSummaryCard("Students Paid", "0", new Color(52, 152, 219));
         JPanel pendingCard = createSummaryCard("Pending Salary", "Rs. 0", new Color(241, 196, 15));
@@ -118,6 +124,17 @@ public class MySalaryGUI extends JDialog {
         valueLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
         valueLabel.setForeground(color);
         valueLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        // Store references based on title
+        if (title.equals("Total Earned")) {
+            totalEarnedValue = valueLabel;
+        } else if (title.equals("Students Paid")) {
+            studentsPaidValue = valueLabel;
+        } else if (title.equals("Pending Salary")) {
+            pendingSalaryValue = valueLabel;
+        } else if (title.equals("Teaching Module")) {
+            moduleValue = valueLabel;
+        }
         
         card.add(titleLabel);
         card.add(Box.createVerticalStrut(5));
@@ -189,7 +206,28 @@ public class MySalaryGUI extends JDialog {
             Class.forName("com.mysql.cj.jdbc.Driver");
             Connection conn = DatabaseUtil.getInstance().getConnection();
             
-            // Get teacher information by username (matching t_name)
+            // First, get the teacher's full name from users table
+            String getUserQuery = "SELECT full_name FROM users WHERE username = ? AND role = 'teacher'";
+            PreparedStatement getUserStmt = conn.prepareStatement(getUserQuery);
+            getUserStmt.setString(1, teacherUsername);
+            ResultSet userRs = getUserStmt.executeQuery();
+            
+            if (!userRs.next()) {
+                JOptionPane.showMessageDialog(this,
+                    "No teacher user found for username: " + teacherUsername,
+                    "User Not Found",
+                    JOptionPane.ERROR_MESSAGE);
+                userRs.close();
+                getUserStmt.close();
+                conn.close();
+                return;
+            }
+            
+            String teacherFullName = userRs.getString("full_name");
+            userRs.close();
+            getUserStmt.close();
+            
+            // Now get teacher information by matching full_name with t_name
             String teacherQuery = "SELECT t.t_id, t.t_name, m.m_name, m.m_id, m.cost, c.c_name " +
                                  "FROM teacher t " +
                                  "INNER JOIN modules m ON t.m_id = m.m_id " +
@@ -197,15 +235,17 @@ public class MySalaryGUI extends JDialog {
                                  "WHERE t.t_name = ?";
             
             PreparedStatement teacherStmt = conn.prepareStatement(teacherQuery);
-            teacherStmt.setString(1, teacherUsername);
+            teacherStmt.setString(1, teacherFullName);
             ResultSet teacherRs = teacherStmt.executeQuery();
             
             if (!teacherRs.next()) {
-                JLabel noDataLabel = new JLabel("No teacher record found for: " + teacherUsername, SwingConstants.CENTER);
-                noDataLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
-                JPanel panel = new JPanel(new BorderLayout());
-                panel.add(noDataLabel, BorderLayout.CENTER);
-                setContentPane(panel);
+                JOptionPane.showMessageDialog(this,
+                    "No teacher record found in database.\n\n" +
+                    "Username: " + teacherUsername + "\n" +
+                    "Full Name: " + teacherFullName + "\n\n" +
+                    "Please ensure the teacher's name in the 'teacher' table matches their full name in the 'users' table.",
+                    "Teacher Record Not Found",
+                    JOptionPane.WARNING_MESSAGE);
                 teacherRs.close();
                 teacherStmt.close();
                 conn.close();
@@ -270,25 +310,18 @@ public class MySalaryGUI extends JDialog {
         int totalRevenue = studentsPaid * moduleCost;
         int pendingSalary = totalRevenue - totalEarned;
         
-        // Update the summary panel
-        Component[] cards = ((JPanel) ((JPanel) getContentPane().getComponent(1)).getComponent(0)).getComponents();
-        
-        // Update values in cards
-        updateCardValue((JPanel) cards[0], String.format("Rs. %,d", totalEarned));
-        updateCardValue((JPanel) cards[1], String.valueOf(studentsPaid));
-        updateCardValue((JPanel) cards[2], String.format("Rs. %,d", pendingSalary));
-        updateCardValue((JPanel) cards[3], moduleName);
-    }
-    
-    private void updateCardValue(JPanel card, String value) {
-        Component[] components = card.getComponents();
-        for (Component comp : components) {
-            if (comp instanceof JLabel) {
-                JLabel label = (JLabel) comp;
-                if (label.getFont().getSize() == 20) { // Value label
-                    label.setText(value);
-                }
-            }
+        // Update the summary cards
+        if (totalEarnedValue != null) {
+            totalEarnedValue.setText(String.format("Rs. %,d", totalEarned));
+        }
+        if (studentsPaidValue != null) {
+            studentsPaidValue.setText(String.valueOf(studentsPaid));
+        }
+        if (pendingSalaryValue != null) {
+            pendingSalaryValue.setText(String.format("Rs. %,d", pendingSalary));
+        }
+        if (moduleValue != null) {
+            moduleValue.setText(moduleName);
         }
     }
     
@@ -367,7 +400,25 @@ public class MySalaryGUI extends JDialog {
             Class.forName("com.mysql.cj.jdbc.Driver");
             Connection conn = DatabaseUtil.getInstance().getConnection();
             
-            // Get teacher info
+            // Get teacher's full name from users table
+            String getUserQuery = "SELECT full_name FROM users WHERE username = ? AND role = 'teacher'";
+            PreparedStatement getUserStmt = conn.prepareStatement(getUserQuery);
+            getUserStmt.setString(1, teacherUsername);
+            ResultSet userRs = getUserStmt.executeQuery();
+            
+            if (!userRs.next()) {
+                textArea.setText("No teacher user found.");
+                userRs.close();
+                getUserStmt.close();
+                conn.close();
+                return;
+            }
+            
+            String teacherFullName = userRs.getString("full_name");
+            userRs.close();
+            getUserStmt.close();
+            
+            // Get teacher info matching full_name with t_name
             String teacherQuery = "SELECT t.t_id, t.t_name, m.m_name, m.m_id, m.cost, c.c_name " +
                                  "FROM teacher t " +
                                  "INNER JOIN modules m ON t.m_id = m.m_id " +
@@ -375,11 +426,11 @@ public class MySalaryGUI extends JDialog {
                                  "WHERE t.t_name = ?";
             
             PreparedStatement stmt = conn.prepareStatement(teacherQuery);
-            stmt.setString(1, teacherUsername);
+            stmt.setString(1, teacherFullName);
             ResultSet rs = stmt.executeQuery();
             
             if (!rs.next()) {
-                textArea.setText("No teacher record found.");
+                textArea.setText("No teacher record found in database.");
                 rs.close();
                 stmt.close();
                 conn.close();
@@ -426,7 +477,7 @@ public class MySalaryGUI extends JDialog {
             details.append("                REVENUE DETAILS\n");
             details.append("═══════════════════════════════════════════════════════\n\n");
             
-            details.append("Teacher: ").append(teacherUsername).append("\n");
+            details.append("Teacher: ").append(teacherFullName).append("\n");
             details.append("Module: ").append(moduleName).append("\n");
             details.append("Course: ").append(courseName).append("\n");
             details.append("Module Cost: Rs. ").append(String.format("%,d", moduleCost)).append(" per student\n\n");

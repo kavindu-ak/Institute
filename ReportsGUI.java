@@ -1,6 +1,7 @@
 import java.awt.*;
 import java.sql.*;
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import lib.DatabaseUtil;
 
@@ -85,7 +86,7 @@ public class ReportsGUI extends JDialog {
         
         // Header
         JPanel headerPanel = new JPanel();
-        headerPanel.setBackground(new Color(52, 73, 94));
+        headerPanel.setBackground(new Color(41, 128, 185));
         headerPanel.setPreferredSize(new Dimension(0, 50));
         JLabel titleLabel = new JLabel("👥 Student Statistics Report");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
@@ -119,7 +120,7 @@ public class ReportsGUI extends JDialog {
             
             // Total revenue from students
             ResultSet rs4 = conn.createStatement().executeQuery(
-                "SELECT SUM(m.cost) as total FROM learning l " +
+                "SELECT COALESCE(SUM(m.cost), 0) as total FROM learning l " +
                 "INNER JOIN modules m ON l.m_id = m.m_id WHERE l.paid = 'yes'");
             int totalRevenue = rs4.next() ? rs4.getInt("total") : 0;
             rs4.close();
@@ -204,7 +205,7 @@ public class ReportsGUI extends JDialog {
         
         // Header
         JPanel headerPanel = new JPanel();
-        headerPanel.setBackground(new Color(52, 73, 94));
+        headerPanel.setBackground(new Color(41, 128, 185));
         headerPanel.setPreferredSize(new Dimension(0, 50));
         JLabel titleLabel = new JLabel("👨‍🏫 Teacher Statistics Report");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
@@ -232,7 +233,7 @@ public class ReportsGUI extends JDialog {
             
             // Total salary paid
             ResultSet rs3 = conn.createStatement().executeQuery(
-                "SELECT SUM(salary) as total FROM salary WHERE paid = 'yes'");
+                "SELECT COALESCE(SUM(salary), 0) as total FROM salary WHERE paid = 'yes'");
             int totalSalary = rs3.next() ? rs3.getInt("total") : 0;
             rs3.close();
             
@@ -327,7 +328,7 @@ public class ReportsGUI extends JDialog {
         
         // Header
         JPanel headerPanel = new JPanel();
-        headerPanel.setBackground(new Color(52, 73, 94));
+        headerPanel.setBackground(new Color(41, 128, 185));
         headerPanel.setPreferredSize(new Dimension(0, 50));
         JLabel titleLabel = new JLabel("💰 Payment Statistics Report");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
@@ -350,7 +351,7 @@ public class ReportsGUI extends JDialog {
             
             // Total revenue
             ResultSet rs2 = conn.createStatement().executeQuery(
-                "SELECT SUM(m.cost) as total FROM learning l " +
+                "SELECT COALESCE(SUM(m.cost), 0) as total FROM learning l " +
                 "INNER JOIN modules m ON l.m_id = m.m_id WHERE l.paid = 'yes'");
             int totalRevenue = rs2.next() ? rs2.getInt("total") : 0;
             rs2.close();
@@ -447,7 +448,7 @@ public class ReportsGUI extends JDialog {
         
         // Header
         JPanel headerPanel = new JPanel();
-        headerPanel.setBackground(new Color(52, 73, 94));
+        headerPanel.setBackground(new Color(41, 128, 185));
         headerPanel.setPreferredSize(new Dimension(0, 50));
         JLabel titleLabel = new JLabel("💵 Salary Statistics Report (93% Formula)");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
@@ -470,13 +471,13 @@ public class ReportsGUI extends JDialog {
             
             // Total salary paid
             ResultSet rs2 = conn.createStatement().executeQuery(
-                "SELECT SUM(salary) as total FROM salary WHERE paid = 'yes'");
+                "SELECT COALESCE(SUM(salary), 0) as total FROM salary WHERE paid = 'yes'");
             int totalSalary = rs2.next() ? rs2.getInt("total") : 0;
             rs2.close();
             
             // Total revenue from which salary calculated
             ResultSet rs3 = conn.createStatement().executeQuery(
-                "SELECT SUM(total_revenue) as total FROM salary WHERE paid = 'yes'");
+                "SELECT COALESCE(SUM(total_revenue), 0) as total FROM salary WHERE paid = 'yes'");
             int totalRevenue = rs3.next() ? rs3.getInt("total") : 0;
             rs3.close();
             
@@ -576,9 +577,38 @@ public class ReportsGUI extends JDialog {
     private void styleTable(JTable table) {
         table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         table.setRowHeight(30);
-        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
-        table.getTableHeader().setBackground(new Color(52, 73, 94));
+        table.setGridColor(new Color(220, 220, 220));
+        table.setShowGrid(true);
+        table.setIntercellSpacing(new Dimension(1, 1));
+        
+        // Enhanced header styling - more visible and flat
+        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        table.getTableHeader().setBackground(new Color(41, 128, 185));
         table.getTableHeader().setForeground(Color.WHITE);
+        table.getTableHeader().setPreferredSize(new Dimension(0, 40));
+        table.getTableHeader().setBorder(BorderFactory.createLineBorder(new Color(31, 97, 141), 2));
+        table.getTableHeader().setReorderingAllowed(false);
+        
+        // Custom renderer to FORCE colors
+        table.getTableHeader().setDefaultRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                JLabel label = (JLabel) super.getTableCellRendererComponent(
+                    table, value, isSelected, hasFocus, row, column);
+                label.setBackground(new Color(41, 128, 185));
+                label.setForeground(Color.WHITE);
+                label.setFont(new Font("Segoe UI", Font.BOLD, 14));
+                label.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createMatteBorder(0, 0, 2, 1, new Color(31, 97, 141)),
+                    BorderFactory.createEmptyBorder(10, 5, 10, 5)
+                ));
+                label.setHorizontalAlignment(SwingConstants.CENTER);
+                label.setOpaque(true);
+                return label;
+            }
+        });
+        
         table.setSelectionBackground(new Color(52, 152, 219));
         table.setSelectionForeground(Color.WHITE);
     }
