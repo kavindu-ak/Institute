@@ -154,24 +154,85 @@ public class UserManagementGUI extends JDialog {
         roleBox.setFont(fieldFont);
         teacherBox.setFont(fieldFont);
         
+        // Make teacher box taller for better visibility
+        teacherBox.setPreferredSize(new Dimension(250, 35));
+        
         // Initially hide teacher selection
         teacherBox.setVisible(false);
-        JLabel teacherLabel = new JLabel("Select Teacher:");
-        teacherLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        JLabel teacherLabel = new JLabel("🧑‍🏫 Link to Teacher:");
+        teacherLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        teacherLabel.setForeground(new Color(41, 128, 185));
         teacherLabel.setVisible(false);
+        
+        // Info panel for teacher selection
+        JPanel teacherInfoPanel = new JPanel(new BorderLayout(5, 5));
+        teacherInfoPanel.setBackground(new Color(232, 245, 252));
+        teacherInfoPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(41, 128, 185), 1),
+            BorderFactory.createEmptyBorder(8, 10, 8, 10)
+        ));
+        teacherInfoPanel.setVisible(false);
+        
+        JLabel infoIcon = new JLabel("ℹ️");
+        infoIcon.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        
+        JLabel infoText = new JLabel("<html><small><b>Important:</b> Select which teacher this user account represents.<br>" +
+                                      "Only teachers without existing accounts are shown.</small></html>");
+        infoText.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        infoText.setForeground(new Color(52, 73, 94));
+        
+        teacherInfoPanel.add(infoIcon, BorderLayout.WEST);
+        teacherInfoPanel.add(infoText, BorderLayout.CENTER);
+        
+        // Preview panel to show selected teacher details
+        JPanel teacherPreviewPanel = new JPanel(new BorderLayout(5, 5));
+        teacherPreviewPanel.setBackground(new Color(240, 248, 255));
+        teacherPreviewPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(155, 89, 182), 2),
+            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+        teacherPreviewPanel.setVisible(false);
+        
+        JLabel previewTitle = new JLabel("✓ Selected Teacher:");
+        previewTitle.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        previewTitle.setForeground(new Color(155, 89, 182));
+        
+        JLabel previewDetails = new JLabel();
+        previewDetails.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        
+        teacherPreviewPanel.add(previewTitle, BorderLayout.NORTH);
+        teacherPreviewPanel.add(previewDetails, BorderLayout.CENTER);
+        
+        // Update preview when teacher is selected
+        teacherBox.addActionListener(e -> {
+            TeacherItem selected = (TeacherItem) teacherBox.getSelectedItem();
+            if (selected != null && selected.getId() > 0) {
+                previewDetails.setText(String.format(
+                    "<html>Name: <b>%s</b><br>Module: <b>%s</b><br>Course: <b>%s</b></html>",
+                    selected.getName(), selected.getModule(), selected.getCourse()
+                ));
+                teacherPreviewPanel.setVisible(true);
+            } else {
+                teacherPreviewPanel.setVisible(false);
+            }
+            dialog.revalidate();
+            dialog.repaint();
+        });
         
         // Load teachers when role changes to "Teacher"
         roleBox.addActionListener(e -> {
             boolean isTeacher = "Teacher".equals(roleBox.getSelectedItem());
             teacherLabel.setVisible(isTeacher);
             teacherBox.setVisible(isTeacher);
+            teacherInfoPanel.setVisible(isTeacher);
+            teacherPreviewPanel.setVisible(false);
             
             if (isTeacher && teacherBox.getItemCount() == 0) {
                 loadAvailableTeachers(teacherBox);
             }
             
             dialog.pack();
-            dialog.setSize(550, isTeacher ? 600 : 550);
+            dialog.setSize(550, isTeacher ? 700 : 550);
         });
         
         int row = 0;
@@ -192,6 +253,22 @@ public class UserManagementGUI extends JDialog {
         gbc.weightx = 0.7;
         formPanel.add(teacherBox, gbc);
         row++;
+        
+        // Teacher info panel
+        gbc.gridx = 0;
+        gbc.gridy = row++;
+        gbc.gridwidth = 2;
+        gbc.insets = new Insets(5, 8, 8, 8);
+        formPanel.add(teacherInfoPanel, gbc);
+        
+        // Teacher preview panel
+        gbc.gridx = 0;
+        gbc.gridy = row++;
+        gbc.gridwidth = 2;
+        formPanel.add(teacherPreviewPanel, gbc);
+        
+        // Reset insets for info label
+        gbc.insets = new Insets(8, 8, 8, 8);
         
         // Info label
         gbc.gridx = 0;
@@ -559,6 +636,18 @@ public class UserManagementGUI extends JDialog {
         
         public int getId() {
             return id;
+        }
+        
+        public String getName() {
+            return name;
+        }
+        
+        public String getModule() {
+            return module;
+        }
+        
+        public String getCourse() {
+            return course;
         }
         
         @Override
