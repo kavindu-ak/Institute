@@ -275,20 +275,18 @@ public class LearningInstituteGUI extends JFrame {
             addMenuItem(sidebar, "📝 Registration Management", e -> openRegistrationManagement());
             addMenuItem(sidebar, "💰 Payment Management", e -> openPaymentManagement());
             addMenuItem(sidebar, "💵 Salary Management", e -> openSalaryManagement());
-            addMenuItem(sidebar, "📊 Reports & Statistics", e -> openReports());
             addMenuItem(sidebar, "⚙️ User Management", e -> openUserManagement());
-            addMenuItem(sidebar, "🔑 Change Password", e -> openChangePassword());
+            addMenuItem(sidebar, "🔒 Change Password", e -> openChangePassword());
             
         } else if (currentRole.equalsIgnoreCase("staff")) {
             addMenuItem(sidebar, "👥 Student Management", e -> openStudentManagement());
             addMenuItem(sidebar, "👨‍🏫 Teacher Management", e -> openTeacherManagement());
             addMenuItem(sidebar, "💰 Payment Management", e -> openPaymentManagement());
-            addMenuItem(sidebar, "📊 Reports & Statistics", e -> openReports());
-            addMenuItem(sidebar, "🔑 Change Password", e -> openChangePassword());
+            addMenuItem(sidebar, "🔒 Change Password", e -> openChangePassword());
             
         } else if (currentRole.equalsIgnoreCase("teacher")) {
             addMenuItem(sidebar, "💵 My Salary", e -> openMySalary());
-            addMenuItem(sidebar, "🔑 Change Password", e -> openChangePassword());
+            addMenuItem(sidebar, "🔒 Change Password", e -> openChangePassword());
         }
         
         sidebar.add(Box.createVerticalGlue());
@@ -375,10 +373,6 @@ public class LearningInstituteGUI extends JFrame {
     
     private void openSalaryManagement() {
         new SalaryManagementGUI(this).setVisible(true);
-    }
-    
-    private void openReports() {
-        new ReportsGUI(this).setVisible(true);
     }
     
     private void openUserManagement() {
